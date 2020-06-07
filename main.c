@@ -115,7 +115,8 @@ Token *tokenize(char *p)
         }
 
         // Punctuator
-        if (*p == '+' || *p == '-' || *p == '*' || *p == '/') {
+        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' ||
+            *p == '*' || *p == '/') {
             cur = new_token(TK_RESERVED, cur, p++);
             continue;
         }
@@ -172,20 +173,38 @@ Node *new_num(int val)
     return node;
 }
 
+Node *expr(void);
+
+// primary = "(" expr ")" | num
+Node *primary(void)
+{
+    // If next is '(' ,then '(' expr ')'.
+    if (consume('(')) {
+        Node *node = expr();
+        expect(')');
+        return node;
+    }
+
+    // If otherwise then number.
+    return new_num(expect_number());
+}
+
+// mul = primary ("*" primary | "/" primary)*
 Node *mul(void)
 {
-    Node *node = new_num(expect_number());
+    Node *node = primary();
 
     for (;;) {
         if (consume('*'))
-            node = new_node(ND_MUL, node, new_num(expect_number()));
+            node = new_node(ND_MUL, node, primary());
         else if (consume('/'))
-            node = new_node(ND_DIV, node, new_num(expect_number()));
+            node = new_node(ND_DIV, node, primary());
         else
             return node;
     }
 }
 
+// expr = mul ("+" mul | "-" mul)*
 Node *expr(void)
 {
     Node *node = mul();
@@ -199,6 +218,10 @@ Node *expr(void)
             return node;
     }
 }
+
+//
+// Code generator
+//
 
 void gen(Node *node)
 {
