@@ -22,12 +22,30 @@ struct Token {
 // Curren token
 Token *token;
 
+// Input program.
+char *user_input;
+
 // Reports an error and exit.
 // Takes the same arguments as printf().
 void error(char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    exit(1);
+}
+
+// Reports an error location and exit.
+void error_at(char *loc, char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+
+    int pos = loc - user_input;
+    fprintf(stderr, "%s\n", user_input);
+    fprintf(stderr, "%*s", pos, ""); // Output pos spaces.
+    fprintf(stderr, "^ ");
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
     exit(1);
@@ -49,7 +67,7 @@ bool consume(char op)
 void expect(char op)
 {
     if (token->kind != TK_RESERVED || token->str[0] != op) {
-        error("Not '%c'.", op);
+        error_at(token->str, "expected '%d'", op);
     }
     token = token->next;
 }
@@ -59,7 +77,7 @@ void expect(char op)
 int expect_number()
 {
     if (token->kind != TK_NUM) {
-        error("Not number.");
+        error_at(token->str, "expected a number");
     }
     int val = token->val;
     token   = token->next;
@@ -105,7 +123,7 @@ Token *tokenize(char *p)
             continue;
         }
 
-        error("invalid token");
+        error_at(p, "expected a number");
     }
 
     new_token(TK_EOF, cur, p);
@@ -119,7 +137,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    token = tokenize(argv[1]);
+    user_input = argv[1];
+    token      = tokenize(user_input);
 
     printf(".globl main\n");
     printf("main:\n");
