@@ -115,7 +115,7 @@ Token *tokenize(char *p)
         }
 
         // Punctuator
-        if (*p == '+' || *p == '-') {
+        if (*p == '+' || *p == '-' || *p == '*' || *p == '/') {
             cur = new_token(TK_RESERVED, cur, p++);
             continue;
         }
@@ -141,6 +141,8 @@ Token *tokenize(char *p)
 typedef enum {
     ND_ADD, // +
     ND_SUB, // -
+    ND_MUL, // *
+    ND_DIV, // /
     ND_NUM, // Integer
 } NodeKind;
 
@@ -170,15 +172,29 @@ Node *new_num(int val)
     return node;
 }
 
-Node *expr(void)
+Node *mul(void)
 {
     Node *node = new_num(expect_number());
 
     for (;;) {
+        if (consume('*'))
+            node = new_node(ND_MUL, node, new_num(expect_number()));
+        else if (consume('/'))
+            node = new_node(ND_DIV, node, new_num(expect_number()));
+        else
+            return node;
+    }
+}
+
+Node *expr(void)
+{
+    Node *node = mul();
+
+    for (;;) {
         if (consume('+'))
-            node = new_node(ND_ADD, node, new_num(expect_number()));
+            node = new_node(ND_ADD, node, mul());
         else if (consume('-'))
-            node = new_node(ND_SUB, node, new_num(expect_number()));
+            node = new_node(ND_SUB, node, mul());
         else
             return node;
     }
@@ -204,6 +220,12 @@ void gen(Node *node)
         break;
     case ND_SUB:
         printf("  sub x0, x0, x1\n");
+        break;
+    case ND_MUL:
+        printf("  mul x0, x0, x1\n");
+        break;
+    case ND_DIV:
+        printf("  udiv x0, x0, x1\n");
         break;
     }
     printf("  str x0, [sp, #-16]!\n");
