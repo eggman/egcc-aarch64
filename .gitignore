@@ -1,0 +1,6 @@
+*.o
+*.swp
+*~
+tmp*
+a.out
+egcc
