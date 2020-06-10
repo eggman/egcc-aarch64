@@ -1,9 +1,13 @@
 CC=aarch64-linux-gnu-gcc
 CFLAGS=-std=c11 -g  -fno-common
 LDFLAGS=-static
+SRCS=$(wildcard *.c)
+OBJS=$(SRCS:.c=.o)
 
-egcc: main.o
-	$(CC) -o $@ $? $(LDFLAGS)
+egcc: $(OBJS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+
+$(OBJS): egcc.h
 
 test: egcc
 	./test.sh
