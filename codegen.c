@@ -2,19 +2,45 @@
 
 #include "egcc.h"
 
+void gen_lval(Node *node)
+{
+    if (node->kind != ND_LVAR) {
+        error("not assign,  because lhs is not var.");
+    }
+
+    printf("  mov x0, x5\n");                    // get base pointer
+    printf("  sub x0, x0, #%d\n", node->offset); // compute var address
+    printf("  str x0, [sp, #-8]!\n");            // push
+}
+
 void gen(Node *node)
 {
-    if (node->kind == ND_NUM) {
+    switch (node->kind) {
+    case ND_NUM:
         printf("  mov x0, #%d\n", node->val);
-        printf("  str x0, [sp, #-16]!\n");
+        printf("  str x0, [sp, #-8]!\n"); // push result
+        return;
+    case ND_LVAR:
+        gen_lval(node);
+        printf("  ldr x1, [sp], #8\n");   // pop var address
+        printf("  ldr x0, [x1]\n");       // load var
+        printf("  str x0, [sp, #-8]!\n"); // push result
+        return;
+    case ND_ASSIGN:
+        gen_lval(node->lhs);
+        gen(node->rhs);
+        printf("  ldr x1, [sp], #8\n");   // pop rhs
+        printf("  ldr x0, [sp], #8\n");   // pop var address
+        printf("  str x1, [x0]\n");       // assign
+        printf("  str x1, [sp, #-8]!\n"); // push result
         return;
     }
 
     gen(node->lhs);
     gen(node->rhs);
 
-    printf("  ldr x1, [sp], #16\n");
-    printf("  ldr x0, [sp], #16\n");
+    printf("  ldr x1, [sp], #8\n"); // pop rhs
+    printf("  ldr x0, [sp], #8\n"); // pop lhs
 
     switch (node->kind) {
     case ND_ADD:
@@ -46,5 +72,22 @@ void gen(Node *node)
         printf("  cset x0, le\n");
         break;
     }
-    printf("  str x0, [sp, #-16]!\n");
+    printf("  str x0, [sp, #-8]!\n"); // push result
+}
+
+void debug_print_node(Node *n)
+{
+    fprintf(stderr, "node->kind=%d\n", n->kind);
+    switch (n->kind) {
+    case ND_NUM:
+        fprintf(stderr, "num val=%d\n", n->val);
+        break;
+    case ND_LVAR:
+        fprintf(stderr, "lvar offset=%d\n", n->offset);
+        break;
+    case ND_ASSIGN:
+        fprintf(stderr, "lhs kind=%d\n", n->lhs->kind);
+        fprintf(stderr, "rhs kind=%d\n", n->rhs->kind);
+        break;
+    }
 }

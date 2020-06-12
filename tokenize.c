@@ -44,14 +44,24 @@ bool consume(char *op)
     return true;
 }
 
+Token *consume_ident(void)
+{
+    if (token->kind != TK_IDENT) {
+        return NULL;
+    }
+    Token *t = token;
+    token    = token->next;
+    return t;
+}
+
 // If the next token is the symbol you are expecting, read one token forward.
 // Otherwise, report an error.
 void expect(char *op)
 {
-    if (token->kind != TK_RESERVED || strlen(op) != token->len ||
+    if (token == NULL || token->kind != TK_RESERVED || strlen(op) != token->len ||
         memcmp(token->str, op, token->len)) {
-        error_at(token->str, "expected \"%s\" token->kind=%d strlen(op)=%d token->len=%d\n",
-                 token->kind, op, strlen(op), token->len);
+        error_at(token->str, "expected \"%s\" token->kind=%d strlen(op)=%d token->len=%d\n", op,
+                 token->kind, strlen(op), token->len);
     }
     token = token->next;
 }
@@ -66,6 +76,11 @@ int expect_number(void)
     int val = token->val;
     token   = token->next;
     return val;
+}
+
+bool at_eof()
+{
+    return token->kind == TK_EOF;
 }
 
 // Create a new token and connect it to cur.
@@ -107,7 +122,7 @@ Token *tokenize(char *p)
         }
 
         // Punctuator
-        if (strchr("+-*/()<>", *p)) {
+        if (strchr("+-*/()<>=;", *p)) {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
         }
@@ -118,6 +133,12 @@ Token *tokenize(char *p)
             char *q  = p;
             cur->val = strtol(p, &p, 10);
             cur->len = p - q;
+            continue;
+        }
+
+        // Identifier
+        if ('a' <= *p && *p <= 'z') {
+            cur = new_token(TK_IDENT, cur, p++, 1);
             continue;
         }
 

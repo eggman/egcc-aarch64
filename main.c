@@ -2,7 +2,7 @@
 
 #include "egcc.h"
 
-// Curren token
+// Current token
 Token *token;
 
 // Input program.
@@ -18,19 +18,31 @@ int main(int argc, char **argv)
     user_input = argv[1];
     token      = tokenize(user_input);
     // debug_print_token(token);
-    Node *node = expr();
+    program();
 
     // Print out the first half of assembly.
     printf(".globl main\n");
     printf("main:\n");
 
-    // Traverse the AST to emit assembly.
-    gen(node);
+    // Prologue
+    // resave stack for a-z 26 pieces variables
+    printf("  str x5, [sp, #-8]!\n"); // push
+    printf("  mov x5, sp\n");         // stroe var base pointer
+    printf("  sub sp, sp, 208\n");
 
-    // A result must be at the top of the stack,
-    // so pop it to x0 to make it a program exit code.
-    printf("  ldr x0, [sp], #16\n");
+    // Code generation from the first expression
+    for (int i = 0; code[i]; i++) {
+        gen(code[i]);
 
+        // There should be one value left on the stack as a result of the evaluation of the
+        // expression, so I'll pop the stack so it doesn't overflow.
+        printf("  ldr x0, [sp], #8\n"); // pop
+    }
+
+    // Epilogue
+    // The result of the last expression is still in x0 and that is the return value.
+    printf("  mov sp, x5\n");
+    printf("  ldr x5, [sp], #8\n"); // pop
     printf("  ret\n");
     return 0;
 }
