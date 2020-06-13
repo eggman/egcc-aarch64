@@ -27,7 +27,7 @@ int main(int argc, char **argv)
     // Prologue
     // reserve stack for variables
     printf("  str x29, [sp, #-8]!\n"); // push
-    printf("  mov x29, sp\n");         // stroe frame register
+    printf("  mov x29, sp\n");         // sp stroe frame register
     printf("  sub sp, sp, #%d\n", stack_size);
 
     // Code generation from the first expression

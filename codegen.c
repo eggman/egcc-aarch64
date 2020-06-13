@@ -2,7 +2,8 @@
 
 #include "egcc.h"
 
-static int labelseq = 1;
+static int labelseq   = 1;
+static char *argreg[] = {"x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7"};
 
 void gen_lval(Node *node)
 {
@@ -78,12 +79,23 @@ void gen(Node *node)
         }
         return;
     }
-    case ND_FUNCALL:
+    case ND_FUNCALL: {
+        int nargs = 0;
+        for (Node *arg = node->args; arg; arg = arg->next) {
+            gen(arg);
+            nargs++;
+        }
+
+        for (int i = nargs - 1; i >= 0; i--) {
+            printf("  ldr %s, [sp], #8\n", argreg[i]); // pop arg
+        }
+
         printf("  str x30, [sp, #-8]!\n");    // push link register
         printf("  bl  %s\n", node->funcname); //
         printf("  ldr x30, [sp], #8\n");      // pop link register
         printf("  str x0, [sp, #-8]!\n");     // push result
         return;
+    }
     case ND_RETURN:
         gen(node->lhs);
         printf("  ldr x0, [sp], #8\n"); // pop result

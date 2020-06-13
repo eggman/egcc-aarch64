@@ -75,12 +75,14 @@ struct Node {
                     //
     Node *body;     // Block
                     //
-    char *funcname; // Function call
+    char *funcname; // Function name for call
+    Node *args;     // Function args
                     //
     int val;        // Used if kind == ND_NUM
     int offset;     // Used if kind == ND_LVAR
 };
 
+Node *assign(void);
 Node *expr(void);
 Node *stmt(void);
 int program(void);

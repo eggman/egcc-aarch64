@@ -55,8 +55,25 @@ LVar *new_lvar(Token *tok)
     return lvar;
 }
 
+// func-args = "(" (assign ("," assign)*)? ")"
+static Node *func_args(void)
+{
+    if (consume(")")) {
+        return NULL;
+    }
+
+    Node *head = assign();
+    Node *cur  = head;
+    while (consume(",")) {
+        cur->next = assign();
+        cur       = cur->next;
+    }
+    expect(")");
+    return head;
+}
+
 // primary = num
-//         | ident ("(" ")")?
+//         | func-args?
 //         | "(" expr ")"
 Node *primary(void)
 {
@@ -72,10 +89,10 @@ Node *primary(void)
 
         // Function call
         if (consume("(")) {
-            expect(")");
             Node *node     = calloc(1, sizeof(Node));
             node->kind     = ND_FUNCALL;
             node->funcname = strndup(tok->str, tok->len);
+            node->args     = func_args();
             return node;
         }
 
