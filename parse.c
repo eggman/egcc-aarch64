@@ -19,7 +19,14 @@ struct LVar {
 // Local vars
 LVar *locals;
 
-Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
+Node *new_node(NodeKind kind)
+{
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = kind;
+    return node;
+}
+
+Node *new_binary(NodeKind kind, Node *lhs, Node *rhs)
 {
     Node *node = calloc(1, sizeof(Node));
     node->kind = kind;
@@ -89,16 +96,13 @@ Node *primary(void)
 
         // Function call
         if (consume("(")) {
-            Node *node     = calloc(1, sizeof(Node));
-            node->kind     = ND_FUNCALL;
+            Node *node     = new_node(ND_FUNCALL);
             node->funcname = strndup(tok->str, tok->len);
             node->args     = func_args();
             return node;
         }
 
-        Node *node = calloc(1, sizeof(Node));
-        node->kind = ND_LVAR;
-
+        Node *node = new_node(ND_LVAR);
         LVar *lvar = find_lvar(tok);
         if (lvar) {
             node->offset = lvar->offset;
@@ -120,7 +124,7 @@ Node *unary(void)
     if (consume("+"))
         return primary();
     if (consume("-"))
-        return new_node(ND_SUB, new_num(0), primary());
+        return new_binary(ND_SUB, new_num(0), primary());
     return primary();
 }
 
@@ -131,9 +135,9 @@ Node *mul(void)
 
     for (;;) {
         if (consume("*"))
-            node = new_node(ND_MUL, node, unary());
+            node = new_binary(ND_MUL, node, unary());
         else if (consume("/"))
-            node = new_node(ND_DIV, node, unary());
+            node = new_binary(ND_DIV, node, unary());
         else
             return node;
     }
@@ -146,9 +150,9 @@ Node *add(void)
 
     for (;;) {
         if (consume("+"))
-            node = new_node(ND_ADD, node, mul());
+            node = new_binary(ND_ADD, node, mul());
         else if (consume("-"))
-            node = new_node(ND_SUB, node, mul());
+            node = new_binary(ND_SUB, node, mul());
         else
             return node;
     }
@@ -160,13 +164,13 @@ Node *relational(void)
     Node *node = add();
     for (;;) {
         if (consume("<=")) {
-            node = new_node(ND_LE, node, add());
+            node = new_binary(ND_LE, node, add());
         } else if (consume(">=")) {
-            node = new_node(ND_LE, add(), node);
+            node = new_binary(ND_LE, add(), node);
         } else if (consume("<")) {
-            node = new_node(ND_LT, node, add());
+            node = new_binary(ND_LT, node, add());
         } else if (consume(">")) {
-            node = new_node(ND_LT, add(), node);
+            node = new_binary(ND_LT, add(), node);
         } else {
             return node;
         }
@@ -179,9 +183,9 @@ Node *equality(void)
     Node *node = relational();
     for (;;) {
         if (consume("==")) {
-            node = new_node(ND_EQ, node, relational());
+            node = new_binary(ND_EQ, node, relational());
         } else if (consume("!=")) {
-            node = new_node(ND_NE, node, relational());
+            node = new_binary(ND_NE, node, relational());
         } else {
             return node;
         }
@@ -194,7 +198,7 @@ Node *assign(void)
     Node *node = equality();
 
     if (consume("=")) {
-        node = new_node(ND_ASSIGN, node, assign());
+        node = new_binary(ND_ASSIGN, node, assign());
     }
     return node;
 }
@@ -216,16 +220,14 @@ Node *stmt(void)
     Node *node;
 
     if (consume("return")) {
-        node       = calloc(1, sizeof(Node));
-        node->kind = ND_RETURN;
-        node->lhs  = expr();
+        node      = new_node(ND_RETURN);
+        node->lhs = expr();
         expect(";");
         return node;
     }
 
     if (consume("if")) {
-        node       = calloc(1, sizeof(Node));
-        node->kind = ND_IF;
+        node = new_node(ND_IF);
         expect("(");
         node->cond = expr();
         expect(")");
@@ -236,8 +238,7 @@ Node *stmt(void)
     }
 
     if (consume("while")) {
-        node       = calloc(1, sizeof(Node));
-        node->kind = ND_WHILE;
+        node = new_node(ND_WHILE);
         expect("(");
         node->cond = expr();
         expect(")");
@@ -246,8 +247,7 @@ Node *stmt(void)
     }
 
     if (consume("for")) {
-        node       = calloc(1, sizeof(Node));
-        node->kind = ND_FOR;
+        node = new_node(ND_FOR);
         expect("(");
         if (!consume(";")) {
             node->init = expr();
@@ -274,8 +274,8 @@ Node *stmt(void)
             cur       = cur->next;
         }
 
-        node       = calloc(1, sizeof(Node));
-        node->kind = ND_BLOCK;
+        node = new_node(ND_BLOCK);
+
         node->body = head.next;
         return node;
     }
@@ -288,14 +288,9 @@ Node *stmt(void)
 // program = stmt*
 int program(void)
 {
-    int i = 0;
-
-    LVar *l   = calloc(1, sizeof(LVar));
-    l->next   = NULL;
-    l->name   = NULL;
-    l->offset = 0;
-    l->len    = 0;
-    locals    = l;
+    int i      = 0;
+    LVar lhead = {0};
+    locals     = &lhead;
 
     while (!at_eof()) {
         code[i++] = stmt();
