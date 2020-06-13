@@ -16,7 +16,7 @@ assert() {
   fi
 }
 
-assert 0 "0;"
+assert 0 "return 0;"
 assert 42 "42;"
 assert 21 "5+20-4;"
 assert 41 ' 12 + 34 - 5;'
@@ -51,5 +51,8 @@ assert 18 'a=3; z=a*5; a+z;'
 
 assert 3 'foo=3; foo;'
 assert 8 'foo123=3; bar=5; foo123+bar;'
+
+assert 10 'return 10;return 20;'
+assert 22 'return_hoge = 22; return return_hoge;';
 
 echo OK

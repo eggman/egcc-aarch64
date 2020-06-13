@@ -176,12 +176,23 @@ Node *expr(void)
     Node *node = assign();
 }
 
-// stmt = expr ";"
+// stmt = expr ";" | "return" expr ";"
 Node *stmt(void)
 {
-    Node *node = expr();
+    Node *node;
 
-    expect(";");
+    if (consume("return")) {
+        node       = calloc(1, sizeof(Node));
+        node->kind = ND_RETURN;
+        node->lhs  = expr();
+    } else {
+        node = expr();
+    }
+
+    if (!consume(";")) {
+        error_at(token->str, "not ';'");
+    }
+
     return node;
 }
 

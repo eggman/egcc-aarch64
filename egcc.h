@@ -8,6 +8,7 @@ typedef enum {
     TK_RESERVED, // Symbol
     TK_IDENT,    // Identifier
     TK_NUM,      // Integer
+    TK_RETURN,   // Return
     TK_EOF,      // End of the input
 } TokenKind;
 
@@ -48,8 +49,9 @@ typedef enum {
     ND_LT,     // <
     ND_LE,     // <=
     ND_ASSIGN, // =
-    ND_LVAR,   // local var
+    ND_LVAR,   // Local var
     ND_NUM,    // Integer
+    ND_RETURN, // Return
 } NodeKind;
 
 // AST node type
