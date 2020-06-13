@@ -41,6 +41,18 @@ void gen(Node *node)
         }
         return;
     }
+    case ND_WHILE: {
+        int seq = labelseq++;
+        printf(".L.begin.%d:\n", seq);
+        gen(node->cond);
+        printf("  ldr x0, [sp], #8\n"); // pop
+        printf("  cmp x0, #0\n");
+        printf("  beq  .L.end.%d\n", seq);
+        gen(node->then);
+        printf("  b .L.begin.%d\n", seq);
+        printf(".L.end.%d:\n", seq);
+        return;
+    }
     case ND_RETURN:
         gen(node->lhs);
         printf("  ldr x0, [sp], #8\n"); // pop result

@@ -179,6 +179,7 @@ Node *expr(void)
 // stmt = expr ";"
 //      | "return" expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
+//      | "while" "(" expr ")" stmt
 Node *stmt(void)
 {
     Node *node;
@@ -200,6 +201,16 @@ Node *stmt(void)
         node->then = stmt();
         if (consume("else"))
             node->els = stmt();
+        return node;
+    }
+
+    if (consume("while")) {
+        node       = calloc(1, sizeof(Node));
+        node->kind = ND_WHILE;
+        expect("(");
+        node->cond = expr();
+        expect(")");
+        node->then = stmt();
         return node;
     }
 

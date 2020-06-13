@@ -60,4 +60,6 @@ assert 8 'foo123=3; bar=5; foo123+bar;'
 assert 10 'return 10;return 20;'
 assert 22 'return_hoge = 22; return return_hoge;';
 
+assert 10 'i=0; while(i<10) i=i+1; return i;'
+
 echo OK
