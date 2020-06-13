@@ -2,6 +2,8 @@
 
 #include "egcc.h"
 
+static int labelseq = 1;
+
 void gen_lval(Node *node)
 {
     if (node->kind != ND_LVAR) {
@@ -16,6 +18,29 @@ void gen_lval(Node *node)
 void gen(Node *node)
 {
     switch (node->kind) {
+    case ND_IF: {
+        fprintf(stderr, "1 \n");
+        int seq = labelseq++;
+        if (node->els) {
+            gen(node->cond);
+            printf("  ldr x0, [sp], #8\n"); // pop
+            printf("  cmp x0, #0\n");
+            printf("  jeq  .L.else.%d\n", seq);
+            gen(node->then);
+            printf("  b .L.end.%d\n", seq);
+            printf(".L.else.%d:\n", seq);
+            gen(node->els);
+            printf(".L.end.%d:\n", seq);
+        } else {
+            gen(node->cond);
+            printf("  ldr x0, [sp], #8\n"); // pop
+            printf("  cmp x0, #0\n");
+            printf("  beq  .L.end.%d\n", seq);
+            gen(node->then);
+            printf(".L.end.%d:\n", seq);
+        }
+        return;
+    }
     case ND_RETURN:
         gen(node->lhs);
         printf("  ldr x0, [sp], #8\n"); // pop result

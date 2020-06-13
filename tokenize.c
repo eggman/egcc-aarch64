@@ -41,11 +41,6 @@ int is_alnum(char c)
 // Return true. Otherwise, return false.
 bool consume(char *op)
 {
-    if (token->kind == TK_RETURN) {
-        token = token->next;
-        return true;
-    }
-
     if (token->kind != TK_RESERVED || strlen(op) != token->len ||
         memcmp(token->str, op, token->len)) {
         return false;
@@ -109,6 +104,32 @@ bool startswith(char *p, char *q)
     return memcmp(p, q, strlen(q)) == 0;
 }
 
+// Consumes the current token if it matches `op`.
+bool equal(Token *tok, char *op)
+{
+    return strlen(op) == tok->len && !strncmp(tok->str, op, tok->len);
+}
+
+static bool is_keyword(Token *tok)
+{
+    static char *kw[] = {"return", "if", "else"};
+
+    for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++) {
+        if (equal(tok, kw[i])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static void convert_keywords(Token *tok)
+{
+    for (Token *t = tok; t->kind != TK_EOF; t = t->next)
+        if (t->kind == TK_IDENT && is_keyword(t)) {
+            t->kind = TK_RESERVED;
+        }
+}
+
 // Tokenize 'p' and return it.
 Token *tokenize(char *p)
 {
@@ -146,13 +167,6 @@ Token *tokenize(char *p)
             continue;
         }
 
-        // return
-        if (strncmp(p, "return", 6) == 0 && !is_alnum(p[6])) {
-            cur = new_token(TK_RETURN, cur, p, 6);
-            p += 6;
-            continue;
-        }
-
         // Identifier
         if (isalpha(*p)) {
             char *q = p++;
@@ -167,6 +181,7 @@ Token *tokenize(char *p)
     }
 
     new_token(TK_EOF, cur, p, 0);
+    convert_keywords(&head);
     return head.next;
 }
 

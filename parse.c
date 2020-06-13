@@ -176,7 +176,9 @@ Node *expr(void)
     Node *node = assign();
 }
 
-// stmt = expr ";" | "return" expr ";"
+// stmt = expr ";"
+//      | "return" expr ";"
+//      | "if" "(" expr ")" stmt ("else" stmt)?
 Node *stmt(void)
 {
     Node *node;
@@ -185,14 +187,24 @@ Node *stmt(void)
         node       = calloc(1, sizeof(Node));
         node->kind = ND_RETURN;
         node->lhs  = expr();
-    } else {
-        node = expr();
+        expect(";");
+        return node;
     }
 
-    if (!consume(";")) {
-        error_at(token->str, "not ';'");
+    if (consume("if")) {
+        node       = calloc(1, sizeof(Node));
+        node->kind = ND_IF;
+        expect("(");
+        node->cond = expr();
+        expect(")");
+        node->then = stmt();
+        if (consume("else"))
+            node->els = stmt();
+        return node;
     }
 
+    node = expr();
+    expect(";");
     return node;
 }
 

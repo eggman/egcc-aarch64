@@ -8,7 +8,6 @@ typedef enum {
     TK_RESERVED, // Symbol
     TK_IDENT,    // Identifier
     TK_NUM,      // Integer
-    TK_RETURN,   // Return
     TK_EOF,      // End of the input
 } TokenKind;
 
@@ -49,9 +48,10 @@ typedef enum {
     ND_LT,     // <
     ND_LE,     // <=
     ND_ASSIGN, // =
+    ND_RETURN, // "return"
+    ND_IF,     // "if"
     ND_LVAR,   // Local var
     ND_NUM,    // Integer
-    ND_RETURN, // Return
 } NodeKind;
 
 // AST node type
@@ -60,6 +60,9 @@ struct Node {
     NodeKind kind; // Node kind
     Node *lhs;     // Left-hand side
     Node *rhs;     // Right-hand side
+    Node *cond;    // if conditoin block
+    Node *then;    // if then block
+    Node *els;     // if else block
     int val;       // Used if kind == ND_NUM
     int offset;    // Used if kind == ND_LVAR
 };
