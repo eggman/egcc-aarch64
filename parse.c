@@ -55,7 +55,9 @@ LVar *new_lvar(Token *tok)
     return lvar;
 }
 
-// primary = num | ident | "(" expr ")"
+// primary = num
+//         | ident ("(" ")")?
+//         | "(" expr ")"
 Node *primary(void)
 {
     // If next is '(' ,then '(' expr ')'.
@@ -67,6 +69,16 @@ Node *primary(void)
 
     Token *tok = consume_ident();
     if (tok) {
+
+        // Function call
+        if (consume("(")) {
+            expect(")");
+            Node *node     = calloc(1, sizeof(Node));
+            node->kind     = ND_FUNCALL;
+            node->funcname = strndup(tok->str, tok->len);
+            return node;
+        }
+
         Node *node = calloc(1, sizeof(Node));
         node->kind = ND_LVAR;
 

@@ -10,7 +10,7 @@ void gen_lval(Node *node)
         error("not assign,  because lhs is not var.");
     }
 
-    printf("  mov x0, x5\n");                    // get base pointer
+    printf("  mov x0, x29\n");                   // get frame register
     printf("  sub x0, x0, #%d\n", node->offset); // compute var address
     printf("  str x0, [sp, #-8]!\n");            // push
 }
@@ -78,11 +78,17 @@ void gen(Node *node)
         }
         return;
     }
+    case ND_FUNCALL:
+        printf("  str x30, [sp, #-8]!\n");    // push link register
+        printf("  bl  %s\n", node->funcname); //
+        printf("  ldr x30, [sp], #8\n");      // pop link register
+        printf("  str x0, [sp, #-8]!\n");     // push result
+        return;
     case ND_RETURN:
         gen(node->lhs);
         printf("  ldr x0, [sp], #8\n"); // pop result
-        printf("  mov sp, x5\n");
-        printf("  ldr x5, [sp], #8\n"); // pop
+        printf("  mov sp, x29\n");
+        printf("  ldr x29, [sp], #8\n"); // pop
         printf("  ret\n");
         return;
     case ND_NUM:
