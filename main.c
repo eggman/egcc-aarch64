@@ -18,17 +18,17 @@ int main(int argc, char **argv)
     user_input = argv[1];
     token      = tokenize(user_input);
     // debug_print_token(token);
-    program();
+    int stack_size = program();
 
     // Print out the first half of assembly.
     printf(".globl main\n");
     printf("main:\n");
 
     // Prologue
-    // resave stack for a-z 26 pieces variables
+    // reserve stack for variables
     printf("  str x5, [sp, #-8]!\n"); // push
     printf("  mov x5, sp\n");         // stroe var base pointer
-    printf("  sub sp, sp, 208\n");
+    printf("  sub sp, sp, #%d\n", stack_size);
 
     // Code generation from the first expression
     for (int i = 0; code[i]; i++) {

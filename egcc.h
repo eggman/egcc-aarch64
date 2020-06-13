@@ -64,7 +64,7 @@ struct Node {
 
 Node *expr(void);
 Node *stmt(void);
-void program(void);
+int program(void);
 void debug_print_node(Node *n);
 
 extern Node *code[100];

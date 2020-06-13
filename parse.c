@@ -1,9 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "egcc.h"
 
 Node *code[100];
+
+typedef struct LVar LVar;
+
+// Type of local var
+struct LVar {
+    LVar *next; // next lvar or NULL
+    char *name; // Name of lvar
+    int len;    // Lengh of lvar
+    int offset; // offset from base pointer
+};
+
+// Local vars
+LVar *locals;
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
 {
@@ -22,12 +36,23 @@ Node *new_num(int val)
     return node;
 }
 
-Node *new_lvar_node(Token *tok)
+// Searches for a variable by name. If the variable is not found, it returns NULL.
+LVar *find_lvar(Token *tok)
 {
-    Node *node   = calloc(1, sizeof(Node));
-    node->kind   = ND_LVAR;
-    node->offset = (tok->str[0] - 'a' + 1) * 8;
-    return node;
+    for (LVar *var = locals; var; var = var->next)
+        if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
+            return var;
+    return NULL;
+}
+
+LVar *new_lvar(Token *tok)
+{
+    LVar *lvar   = calloc(1, sizeof(LVar));
+    lvar->next   = locals;
+    lvar->name   = tok->str;
+    lvar->len    = tok->len;
+    lvar->offset = locals->offset + 8;
+    return lvar;
 }
 
 // primary = num | ident | "(" expr ")"
@@ -42,7 +67,18 @@ Node *primary(void)
 
     Token *tok = consume_ident();
     if (tok) {
-        return new_lvar_node(tok);
+        Node *node = calloc(1, sizeof(Node));
+        node->kind = ND_LVAR;
+
+        LVar *lvar = find_lvar(tok);
+        if (lvar) {
+            node->offset = lvar->offset;
+        } else {
+            lvar         = new_lvar(tok);
+            node->offset = lvar->offset;
+            locals       = lvar;
+        }
+        return node;
     }
 
     // If otherwise then number.
@@ -150,11 +186,21 @@ Node *stmt(void)
 }
 
 // program = stmt*
-void program(void)
+int program(void)
 {
     int i = 0;
+
+    LVar *l   = calloc(1, sizeof(LVar));
+    l->next   = NULL;
+    l->name   = NULL;
+    l->offset = 0;
+    l->len    = 0;
+    locals    = l;
+
     while (!at_eof()) {
         code[i++] = stmt();
     }
     code[i] = NULL;
+
+    return locals->offset;
 }
