@@ -19,7 +19,6 @@ void gen(Node *node)
 {
     switch (node->kind) {
     case ND_IF: {
-        fprintf(stderr, "1 \n");
         int seq = labelseq++;
         if (node->els) {
             gen(node->cond);
@@ -49,6 +48,26 @@ void gen(Node *node)
         printf("  cmp x0, #0\n");
         printf("  beq  .L.end.%d\n", seq);
         gen(node->then);
+        printf("  b .L.begin.%d\n", seq);
+        printf(".L.end.%d:\n", seq);
+        return;
+    }
+    case ND_FOR: {
+        int seq = labelseq++;
+        if (node->init) {
+            gen(node->init);
+        }
+        printf(".L.begin.%d:\n", seq);
+        if (node->cond) {
+            gen(node->cond);
+            printf("  ldr x0, [sp], #8\n"); // pop
+            printf("  cmp x0, #0\n");
+            printf("  beq  .L.end.%d\n", seq);
+        }
+        gen(node->then);
+        if (node->inc) {
+            gen(node->inc);
+        }
         printf("  b .L.begin.%d\n", seq);
         printf(".L.end.%d:\n", seq);
         return;

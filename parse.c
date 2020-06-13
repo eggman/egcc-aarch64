@@ -177,9 +177,11 @@ Node *expr(void)
 }
 
 // stmt = expr ";"
+//      | "{" stmt* "}"
 //      | "return" expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
+//      | "for" "(" expr? ";" expr? ";"  expr? ")" stmt
 Node *stmt(void)
 {
     Node *node;
@@ -210,6 +212,26 @@ Node *stmt(void)
         expect("(");
         node->cond = expr();
         expect(")");
+        node->then = stmt();
+        return node;
+    }
+
+    if (consume("for")) {
+        node       = calloc(1, sizeof(Node));
+        node->kind = ND_FOR;
+        expect("(");
+        if (!consume(";")) {
+            node->init = expr();
+            expect(";");
+        }
+        if (!consume(";")) {
+            node->cond = expr();
+            expect(";");
+        }
+        if (!consume(")")) {
+            node->inc = expr();
+            expect(")");
+        }
         node->then = stmt();
         return node;
     }

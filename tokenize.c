@@ -112,7 +112,7 @@ bool equal(Token *tok, char *op)
 
 static bool is_keyword(Token *tok)
 {
-    static char *kw[] = {"return", "if", "else", "while"};
+    static char *kw[] = {"return", "if", "else", "while", "for"};
 
     for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++) {
         if (equal(tok, kw[i])) {
