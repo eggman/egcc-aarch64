@@ -16,11 +16,6 @@ assert() {
   fi
 }
 
-assert 3 'if (0) return 2; return 3;'
-assert 3 'if (1-1) return 2; return 3;'
-assert 2 'if (1) return 2; return 3;'
-assert 2 'if (2-1) return 2; return 3;'
-
 assert 0 "return 0;"
 assert 42 "42;"
 assert 21 "5+20-4;"
@@ -60,7 +55,15 @@ assert 8 'foo123=3; bar=5; foo123+bar;'
 assert 10 'return 10;return 20;'
 assert 22 'return_hoge = 22; return return_hoge;';
 
+assert 3 'if (0) return 2; return 3;'
+assert 3 'if (1-1) return 2; return 3;'
+assert 2 'if (1) return 2; return 3;'
+assert 2 'if (2-1) return 2; return 3;'
+
+assert 3 '{1; {2;} return 3;}'
+
 assert 10 'i=0; while(i<10) i=i+1; return i;'
+assert 55 'i=0; j=0; while(i<=10) {j=i+j; i=i+1;} return j;'
 
 assert 55 'i=0; j=0; for (i=0; i<=10; i=i+1) j=i+j; return j;'
 assert 3 'for (;;) return 3; return 5;'

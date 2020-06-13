@@ -72,6 +72,12 @@ void gen(Node *node)
         printf(".L.end.%d:\n", seq);
         return;
     }
+    case ND_BLOCK: {
+        for (Node *n = node->body; n; n = n->next) {
+            gen(n);
+        }
+        return;
+    }
     case ND_RETURN:
         gen(node->lhs);
         printf("  ldr x0, [sp], #8\n"); // pop result

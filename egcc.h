@@ -52,6 +52,7 @@ typedef enum {
     ND_IF,     // "if"
     ND_WHILE,  // "while"
     ND_FOR,    // "for"
+    ND_BLOCK,  // { ... }
     ND_LVAR,   // Local var
     ND_NUM,    // Integer
 } NodeKind;
@@ -60,13 +61,19 @@ typedef enum {
 typedef struct Node Node;
 struct Node {
     NodeKind kind; // Node kind
+    Node *next;    // Nodt node
+                   //
     Node *lhs;     // Left-hand side
     Node *rhs;     // Right-hand side
+                   //
     Node *cond;    // if / while / for conditoin expr
     Node *then;    // if / while / for body stmt
     Node *els;     // if else stmt
     Node *init;    // for init expr
     Node *inc;     // for increment expr
+                   //
+    Node *body;    // Block
+                   //
     int val;       // Used if kind == ND_NUM
     int offset;    // Used if kind == ND_LVAR
 };

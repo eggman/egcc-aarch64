@@ -177,11 +177,11 @@ Node *expr(void)
 }
 
 // stmt = expr ";"
-//      | "{" stmt* "}"
 //      | "return" expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
 //      | "for" "(" expr? ";" expr? ";"  expr? ")" stmt
+//      | "{" stmt* "}"
 Node *stmt(void)
 {
     Node *node;
@@ -233,6 +233,21 @@ Node *stmt(void)
             expect(")");
         }
         node->then = stmt();
+        return node;
+    }
+
+    if (consume("{")) {
+        Node head = {};
+        Node *cur = &head;
+
+        while (!consume("}")) {
+            cur->next = stmt();
+            cur       = cur->next;
+        }
+
+        node       = calloc(1, sizeof(Node));
+        node->kind = ND_BLOCK;
+        node->body = head.next;
         return node;
     }
 
