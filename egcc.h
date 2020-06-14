@@ -94,4 +94,4 @@ extern Node *code[100];
 // codegen.c
 //
 
-void gen(Node *node);
+void codegen(int stack_size);

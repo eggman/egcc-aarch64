@@ -2,6 +2,13 @@
 
 #include "egcc.h"
 
+// aarch64 registers
+//
+// sp              stack pointer
+// r30   x30   lr  link register
+// r29   x29   fp  frame pointer
+// r0-r7 x0-x7     parameter/result registers
+
 static int labelseq   = 1;
 static char *argreg[] = {"x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7"};
 
@@ -11,7 +18,7 @@ void gen_lval(Node *node)
         error("not assign,  because lhs is not var.");
     }
 
-    printf("  mov x0, x29\n");                   // get frame register
+    printf("  mov x0, fp\n");                    // get frame pointer
     printf("  sub x0, x0, #%d\n", node->offset); // compute var address
     printf("  str x0, [sp, #-8]!\n");            // push
 }
@@ -90,18 +97,16 @@ void gen(Node *node)
             printf("  ldr %s, [sp], #8\n", argreg[i]); // pop arg
         }
 
-        printf("  str x30, [sp, #-8]!\n");    // push link register
+        printf("  str lr, [sp, #-8]!\n");     // push link register
         printf("  bl  %s\n", node->funcname); //
-        printf("  ldr x30, [sp], #8\n");      // pop link register
+        printf("  ldr lr, [sp], #8\n");       // pop link register
         printf("  str x0, [sp, #-8]!\n");     // push result
         return;
     }
     case ND_RETURN:
         gen(node->lhs);
         printf("  ldr x0, [sp], #8\n"); // pop result
-        printf("  mov sp, x29\n");
-        printf("  ldr x29, [sp], #8\n"); // pop
-        printf("  ret\n");
+        printf("  b .L.return\n");
         return;
     case ND_NUM:
         printf("  mov x0, #%d\n", node->val);
@@ -160,6 +165,35 @@ void gen(Node *node)
         break;
     }
     printf("  str x0, [sp, #-8]!\n"); // push result
+}
+
+void codegen(int stack_size)
+{
+    // Print out the first half of assembly.
+    printf(".globl main\n");
+    printf("main:\n");
+
+    // Prologue
+    // reserve stack for variables
+    printf("  str fp, [sp, #-8]!\n"); // push
+    printf("  mov fp, sp\n");         // stroe sp to frame pointer
+    printf("  sub sp, sp, #%d\n", stack_size);
+
+    // Code generation from the first expression
+    for (int i = 0; code[i]; i++) {
+        gen(code[i]);
+
+        // There should be one value left on the stack as a result of the evaluation of the
+        // expression, so I'll pop the stack so it doesn't overflow.
+        printf("  ldr x0, [sp], #8\n"); // pop
+    }
+
+    // Epilogue
+    // The result of the last expression is still in x0 and that is the return value.
+    printf(".L.return:\n");
+    printf("  mov sp, fp\n");
+    printf("  ldr fp, [sp], #8\n"); // pop
+    printf("  ret\n");
 }
 
 void debug_print_node(Node *n)

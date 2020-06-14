@@ -4,6 +4,9 @@
 
 #include "egcc.h"
 
+// aarch64's  sring.h does not define strndup
+char *strndup(const char *s, size_t n);
+
 Node *code[100];
 
 typedef struct LVar LVar;
