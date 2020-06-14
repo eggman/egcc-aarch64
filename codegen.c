@@ -32,7 +32,7 @@ void gen(Node *node)
             gen(node->cond);
             printf("  ldr x0, [sp], #8\n"); // pop
             printf("  cmp x0, #0\n");
-            printf("  jeq  .L.else.%d\n", seq);
+            printf("  beq  .L.else.%d\n", seq);
             gen(node->then);
             printf("  b .L.end.%d\n", seq);
             printf(".L.else.%d:\n", seq);
