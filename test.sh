@@ -15,7 +15,7 @@ assert() {
 
   ./egcc "$input" > tmp.s
   aarch64-linux-gnu-gcc -static -o tmp tmp.s tmp2.o
-  ./tmp
+  qemu-aarch64 ./tmp
   actual="$?"
 
   if [ "$actual" = "$expected" ]; then
