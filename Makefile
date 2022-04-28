@@ -1,4 +1,4 @@
-CC=aarch64-linux-gnu-gcc
+CC=aarch64-none-linux-gnu-gcc
 CFLAGS=-std=c11 -g  -fno-common
 LDFLAGS=-static
 SRCS=$(wildcard *.c)

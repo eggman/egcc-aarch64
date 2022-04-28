@@ -1,5 +1,5 @@
 #!/bin/bash
-cat <<EOF | aarch64-linux-gnu-gcc -xc -c -o tmp2.o -
+cat <<EOF | aarch64-none-linux-gnu-gcc -xc -c -o tmp2.o -
 int ret3() { return 3; }
 int ret5() { return 5; }
 int add(int x, int y) { return x+y; }
@@ -14,7 +14,7 @@ assert() {
   input="$2"
 
   ./egcc "$input" > tmp.s
-  aarch64-linux-gnu-gcc -static -o tmp tmp.s tmp2.o
+  aarch64-none-linux-gnu-gcc -static -o tmp tmp.s tmp2.o
   qemu-aarch64 ./tmp
   actual="$?"
 
